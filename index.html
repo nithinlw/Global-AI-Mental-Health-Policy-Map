@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Global AI mental-health policy map</title>
+
+  <!-- Tabler icons: provides the moon/sun/refresh/world/arrow glyphs used below. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+
+  <style>
+    /* ============================================================
+       PAGE FRAME
+       These rules make the widget a proper standalone web page:
+       a page background, a centered column, and outer padding.
+       (In the artifact host these came from the wrapper; here we
+       supply them ourselves.)
+       ============================================================ */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    /* ============================================================
+       THEME TOKENS (light + dark)
+       ============================================================ */
+    .mhp {
+      --pagebg: #f7f8fa;
+      --srf:   #ffffff;
+      --srf1:  #f4f6f4;
+      --tx:    #20241f;
+      --tx2:   #5d635c;
+      --bd:    rgba(0, 0, 0, .12);
+      --bd2:   rgba(0, 0, 0, .22);
+      --ocean: #eef1f4;
+      --chip:  #eef0ee;
+
+      background: var(--pagebg);
+      color: var(--tx);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+
+      min-height: 100vh;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 22px 22px 40px;
+    }
+    .mhp.dark {
+      --pagebg: #14161b;
+      --srf:   #20242c;
+      --srf1:  #272c35;
+      --tx:    #e9ecf1;
+      --tx2:   #a7aebb;
+      --bd:    rgba(255, 255, 255, .14);
+      --bd2:   rgba(255, 255, 255, .28);
+      --ocean: #1a1d24;
+      --chip:  #2d333d;
+    }
+    .mhp * { box-sizing: border-box; }
+
+    /* ============================================================
+       HEADER
+       ============================================================ */
+    .mhp .hd {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .mhp h3 {
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+      font-size: 23px;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: .01em;
+    }
+    .mhp .sub   { font-size: 12.5px; color: var(--tx2); margin: 4px 0 0; }
+    .mhp .meta3 { font-size: 12px;   color: var(--tx2); margin: 3px 0 0; }
+
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .mhp .btn {
+      font: inherit;
+      font-size: 13px;
+      padding: 6px 11px;
+      border: .5px solid var(--bd2);
+      background: var(--srf);
+      color: var(--tx);
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mhp .btn:hover { background: var(--srf1); }
+    .mhp .btn.on {
+      background: var(--tx);
+      color: var(--srf);
+      border-color: var(--tx);
+    }
+    .mhp .btn.dim { opacity: .4; }
+
+    /* ============================================================
+       COLOR-BY MODE SWITCHER
+       ============================================================ */
+    .mhp .seg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin: 12px 0 0;
+    }
+    .mhp .seg .lbl { font-size: 12px; color: var(--tx2); margin-right: 2px; }
+
+    /* ============================================================
+       FILTER BAR
+       ============================================================ */
+    .mhp .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      align-items: flex-end;
+      margin: 10px 0 4px;
+      padding: 10px 12px;
+      border: .5px solid var(--bd);
+      border-radius: 10px;
+      background: var(--srf1);
+    }
+    .mhp .fg {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .mhp .fg label {
+      font-size: 10px;
+      color: var(--tx2);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    /* Checkbox-style filters (Yes/off) */
+    .mhp .fg.check { justify-content: flex-end; padding-bottom: 6px; }
+    .mhp .fg label.chk {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--tx);
+      text-transform: none;
+      letter-spacing: normal;
+      cursor: pointer;
+    }
+    .mhp .fg label.chk input { margin: 0; cursor: pointer; }
+    .mhp select {
+      font: inherit;
+      font-size: 12px;
+      padding: 5px 6px;
+      border: .5px solid var(--bd2);
+      border-radius: 7px;
+      background: var(--srf);
+      color: var(--tx);
+      max-width: 148px;
+    }
+    .mhp .fmeta { font-size: 12px; color: var(--tx2); margin: 2px 0 0; }
+
+    /* Timeline / rollout slider */
+    .mhp .timeline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 2px;
+      padding: 8px 12px;
+      border: .5px solid var(--bd);
+      border-radius: 10px;
+      background: var(--srf1);
+    }
+    .mhp .timeline .tcap {
+      font-size: 10px;
+      color: var(--tx2);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      flex: 0 0 auto;
+    }
+    .mhp .timeline input[type="range"] {
+      flex: 1 1 auto;
+      min-width: 120px;
+      accent-color: #3d7fd1;
+      cursor: pointer;
+    }
+    .mhp .timeline .tlab {
+      font-size: 12px;
+      color: var(--tx2);
+      min-width: 128px;
+      text-align: right;
+      flex: 0 0 auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .mhp .tbtn { padding: 6px 8px; flex: 0 0 auto; }
+
+    /* ============================================================
+       TWO-COLUMN LAYOUT: map (left) + policy panel (right)
+       ============================================================ */
+    .mhp .cols {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+    .mhp .mapcol  { flex: 1.8 1 400px; min-width: 300px; }
+    .mhp .sidecol { flex: 1 1 232px;   min-width: 224px; }
+
+    /* ============================================================
+       MAP
+       ============================================================ */
+    .mhp .mapwrap {
+      position: relative;
+      border: .5px solid var(--bd);
+      border-radius: 12px;
+      background: var(--ocean);
+      overflow: hidden;
+      min-height: 240px;
+    }
+    .mhp svg .land { transition: opacity .15s; }
+    .mhp svg .land.has { cursor: pointer; }
+    .mhp svg .land.has:hover { stroke: #f0a500; stroke-width: 1.4px; }
+    .mhp svg .mk { cursor: pointer; }
+
+    .mhp .tip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--tx);
+      color: var(--srf);
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      opacity: 0;
+      transform: translate(-50%, -115%);
+      white-space: nowrap;
+      z-index: 5;
+    }
+    .mhp .legend {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      background: var(--srf);
+      border: .5px solid var(--bd);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 11px;
+      max-width: 56%;
+    }
+    .mhp .legend .lt  { font-size: 10.5px; color: var(--tx2); margin-bottom: 4px; }
+    .mhp .legend .row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+    .mhp .sw {
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      flex: 0 0 auto;
+      border: .5px solid var(--bd);
+    }
+    .mhp .back {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 6;
+      display: none;
+    }
+
+    /* ============================================================
+       SUPRANATIONAL FRAMEWORK BUTTONS
+       ============================================================ */
+    .mhp .supra {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin: 10px 0 0;
+    }
+    .mhp .supra .lbl { font-size: 12px; color: var(--tx2); width: 100%; margin-bottom: 1px; }
+
+    /* ============================================================
+       POLICY PANEL (right column)
+       ============================================================ */
+    .mhp .panel {
+      border: .5px solid var(--bd);
+      border-radius: 12px;
+      background: var(--srf);
+      overflow: hidden;
+    }
+    .mhp .ph {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 11px 13px;
+      border-bottom: .5px solid var(--bd);
+      background: var(--srf1);
+    }
+    .mhp .ph .pt { font-size: 14.5px; font-weight: 600; }
+    .mhp .ph .ps { font-size: 11.5px; color: var(--tx2); margin-top: 2px; }
+    .mhp .cards {
+      padding: 11px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 68vh;      /* policy list scrolls internally... */
+      overflow-y: auto;      /* ...rather than growing the whole page */
+    }
+    .mhp .hint { font-size: 12.5px; color: var(--tx2); padding: 6px 2px; }
+    .mhp .grp {
+      font-size: 11px;
+      color: var(--tx2);
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      margin: 2px 0 -2px;
+    }
+
+    /* ---- Individual policy card ---- */
+    .mhp .card {
+      border: .5px solid var(--bd);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: var(--srf);
+    }
+    .mhp .card .ct { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
+    .mhp .card .ct a {
+      color: var(--tx);
+      text-decoration: none;
+      border-bottom: 1px solid var(--bd2);
+    }
+    .mhp .card .ct a:hover { color: #3d7fd1; border-color: #3d7fd1; }
+    .mhp .card .ag { font-size: 12px; color: var(--tx2); margin: 3px 0 8px; }
+
+    .mhp .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+    .mhp .chip {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 20px;
+      background: var(--chip);
+      color: var(--tx);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .mhp .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+
+    .mhp .meta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px 12px;
+      font-size: 11.5px;
+      margin-bottom: 8px;
+    }
+    .mhp .meta .k {
+      color: var(--tx2);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+    .mhp .meta .v { margin-top: 1px; }
+
+    /* ---- Tags (technology + governance requirement flags) ---- */
+    .mhp .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .mhp .tag {
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: .5px solid var(--bd);
+      color: var(--tx2);
+    }
+    .mhp .tag.tech {
+      background: rgba(61, 127, 209, .12);
+      border-color: rgba(61, 127, 209, .3);
+      color: #2f6bb0;
+    }
+    .mhp.dark .tag.tech { color: #89b7ea; }
+    .mhp .tag.gov {
+      background: rgba(47, 168, 154, .12);
+      border-color: rgba(47, 168, 154, .3);
+      color: #1f7d72;
+    }
+    .mhp.dark .tag.gov { color: #63cbbc; }
+
+    /* ---- Panel close button + footer + loading overlay ---- */
+    .mhp .x {
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--tx2);
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .mhp .ft { font-size: 11px; color: var(--tx2); margin-top: 12px; }
+    .mhp .ovl {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--tx2);
+      font-size: 13px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="mhp" id="mhp">
+  <h2 class="sr-only">Interactive world map of government policies governing AI in mental health, with ten filter dropdowns, four color modes, a right-side policy panel, and a US state drill-down.</h2>
+
+  <div class="hd">
+    <div>
+      <h3>Global AI mental-health policy map</h3>
+      <p class="sub">Government laws, regulations, and guidance on AI companions, AI therapy, and mental-health safeguards.</p>
+      <p class="meta3" id="meta3"></p>
+    </div>
+    <button class="btn" id="dark"><i class="ti ti-moon" aria-hidden="true"></i><span>Dark</span></button>
+  </div>
+
+  <div class="seg" id="modes"><span class="lbl">Color by</span></div>
+  <div class="filters" id="filters"></div>
+  <div class="fmeta" id="fmeta"></div>
+  <div class="timeline" id="timeline">
+    <button class="btn tbtn" id="play" aria-label="Play timeline"><i class="ti ti-player-play" aria-hidden="true"></i></button>
+    <span class="tcap">Rollout</span>
+    <input type="range" id="tslider" min="0" max="0" value="0" step="1" aria-label="Show policies published on or before this date">
+    <span class="tlab" id="tlab"></span>
+  </div>
+
+  <div class="cols">
+    <div class="mapcol">
+      <div class="mapwrap" id="mapwrap">
+        <button class="btn back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i>Back to world</button>
+        <div class="tip" id="tip"></div>
+        <div class="legend" id="legend"></div>
+        <div class="ovl" id="ovl">Loading map&hellip;</div>
+      </div>
+      <div class="supra" id="supra"><span class="lbl">Supranational and international frameworks</span></div>
+    </div>
+
+    <div class="sidecol">
+      <div class="panel">
+        <div class="ph">
+          <div>
+            <div class="pt" id="ptitle">Policies</div>
+            <div class="ps" id="psub"></div>
+          </div>
+          <button class="x" id="pclose" aria-label="Clear">&times;</button>
+        </div>
+        <div class="cards" id="cards"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // Snapshot baked into the page: used only if the live /api/data feed
+  // (which refreshes from the Google Sheet ~once a day) is unavailable.
+  var UPDATED_FALLBACK = "16 Jul 2026";
+
+  /* ============================================================
+     1. DATA
+     P     = national / subnational policies (one row per policy)
+     SUPRA = supranational & international frameworks
+     Field key:
+       r        country name (matches the world-atlas feature name)
+       lvl      National | Subnational | Municipal | Agency-specific
+       sub      subnational unit (states/regions), when lvl=Subnational
+       st       source type
+       gen      GenAI-specific? (Yes/Partial/No/Unknown)
+       agency   ministry / regulator
+       title    document title (linked via url)
+       inst     instrument type
+       lb/legalRaw   legal status  (coded key + display text)
+       bb/bindRaw    bindingness   (coded key + display text)
+       mb/mhRaw      MH relevance  (coded key + display text)
+       pub/eff  published / effective dates
+       target   target population
+       tech     technology tags
+       req      governance requirement flags
+     ============================================================ */
+  var P_FALLBACK = [
+    {r:"Singapore",lvl:"National",st:"Official regulator guidance",gen:"No",agency:"Infocomm Media Development Authority (IMDA)",title:"Model AI Governance Framework for Agentic AI",url:"https://www.imda.gov.sg/-/media/imda/files/about/emerging-tech-and-research/artificial-intelligence/mgf-for-agentic-ai.pdf",inst:"Framework",lb:"active",legalRaw:"Published framework",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2026-05-20",eff:"2026-05-20",target:"General population",tech:[],req:[]},
+    {r:"Singapore",lvl:"National",st:"Official regulator guidance",gen:"No",agency:"Ministry of Health & Health Sciences Authority",title:"Artificial Intelligence in Healthcare Guidelines v2.0",url:"https://isomer-user-content.by.gov.sg/3/23fb5b36-56b4-4abb-9370-75c9ddcaf3ed/AIHGle%202.0.pdf",inst:"Regulatory guidance",lb:"active",legalRaw:"Active guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2026-03-10",eff:"2026-03-10",target:"Developers, deployers, users of healthcare AI",tech:["Medical device (SaMD)"],req:[]},
+    {r:"Australia",lvl:"National",st:"Academic / commentary",gen:"No",agency:"Suicide Prevention Australia",title:"AI and Digital Safety",url:"https://www.suicidepreventionaust.org/wp-content/uploads/2025/07/Ai-Digital-Safety-Report.pdf",inst:"Expert recommendations",lb:"active",legalRaw:"Active guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"implied",mhRaw:"Implied applicability to mental health",pub:"2025-07",eff:"N/A",target:"Government and tech companies",tech:[],req:["Human oversight","Safety monitoring","Crisis escalation","Privacy","Bias/equity","Accountability"]},
+    {r:"Australia",lvl:"National",st:"Academic / commentary",gen:"No",agency:"International Bar Association",title:"AI and mental health services",url:"https://www.ibanet.org/ai-mental-health-services",inst:"Commentary",lb:"active",legalRaw:"Active guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2026-05-11",eff:"N/A",target:"Healthcare providers and digital-health compliance staff",tech:[],req:["Human oversight","Safety monitoring","Crisis escalation","Bias/equity","Accountability"]},
+    {r:"Canada",lvl:"National",st:"Official law / regulation",gen:"No",agency:"Innovation, Science and Economic Development Canada",title:"Artificial Intelligence and Data Act (AIDA) companion document",url:"https://ised-isde.canada.ca/site/innovation-better-canada/en/artificial-intelligence-and-data-act-aida-companion-document",inst:"Law / regulation",lb:"proposed",legalRaw:"Proposed",bb:"proposed",bindRaw:"Proposed / not yet binding",mb:"implied",mhRaw:"Implied applicability to mental health",pub:"2026-04-07",eff:"N/A",target:"General population affected by AI systems",tech:[],req:["Human oversight","Safety monitoring","Disclosure","Privacy","Bias/equity","Accountability","Enforcement"]},
+    {r:"Canada",lvl:"National",st:"Official government guidance",gen:"No",agency:"Health Canada",title:"Pre-market guidance for machine-learning-enabled medical devices",url:"https://www.canada.ca/content/dam/hc-sc/documents/services/drugs-health-products/medical-devices/application-information/guidance-documents/pre-market-guidance-machine-learning-enabled-medical-devices/pre-market-guidance-machine-learning-enabled-medical-devices.pdf",inst:"Regulatory guidance",lb:"active",legalRaw:"Published guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"implied",mhRaw:"Implied applicability to mental health",pub:"2026-04",eff:"N/A",target:"Manufacturers and users of ML medical devices",tech:["Medical device (SaMD)"],req:["Human oversight","Clinical validation","Safety monitoring","Bias/equity","Accountability"]},
+    {r:"United States of America",lvl:"National",st:"Secondary source",gen:"Yes",agency:"U.S. Congress / Senate Judiciary Committee",title:"GUARD Act (User Verification and Responsible Dialogue)",url:"https://www.congress.gov/",inst:"Proposed law",lb:"proposed",legalRaw:"Introduced",bb:"proposed",bindRaw:"Proposed / not yet binding",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025-10-28",eff:"N/A",target:"Minors using AI companions",tech:["GenAI specific","Chatbot specific","Consumer-facing"],req:["Crisis escalation","Disclosure","Privacy","Enforcement"]},
+    {r:"United States of America",lvl:"National",st:"Official government guidance",gen:"Partial",agency:"White House Office of Science and Technology Policy",title:"National Policy Framework for AI: Legislative Recommendations",url:"https://www.whitehouse.gov/wp-content/uploads/2026/03/03.20.26-National-Policy-Framework-for-Artificial-Intelligence-Legislative-Recommendations.pdf",inst:"Policy proposal",lb:"proposed",legalRaw:"Proposed",bb:"proposed",bindRaw:"Proposed / not yet binding",mb:"implied",mhRaw:"Implied applicability to mental health",pub:"2026-03",eff:"N/A",target:"General public",tech:["Consumer-facing"],req:["Accountability","Enforcement"]},
+    {r:"United States of America",lvl:"National",st:"Official government guidance",gen:"Yes",agency:"National Institute of Standards and Technology",title:"AI Risk Management Framework: Generative AI Profile",url:"https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",inst:"Government guidance",lb:"active",legalRaw:"Published framework",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2024-07",eff:"N/A",target:"GenAI developers, deployers, and the public",tech:["GenAI specific","Chatbot specific","Consumer-facing"],req:["Human oversight","Clinical validation","Safety monitoring","Crisis escalation","Disclosure","Privacy","Bias/equity","Accountability"]},    {r:"United States of America",lvl:"Subnational",sub:"California",st:"Official law / regulation",gen:"Yes",agency:"California Legislature; Office of Suicide Prevention",title:"SB 243 - Companion chatbots",url:"https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=202520260SB243",inst:"Law / regulation",lb:"enacted",legalRaw:"Chaptered / enacted",bb:"binding",bindRaw:"Binding",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025-10-14",eff:"2026-01-01",target:"All users; added safeguards for minors",tech:["GenAI specific","Chatbot specific","Consumer-facing"],req:["Safety monitoring","Crisis escalation","Disclosure","Privacy","Accountability","Enforcement"]},
+    {r:"United States of America",lvl:"Subnational",sub:"Illinois",st:"Official law / regulation",gen:"Yes",agency:"Illinois Dept. of Financial and Professional Regulation",title:"Wellness and Oversight for Psychological Resources Act",url:"https://www.ilga.gov/legislation/",inst:"Law / regulation",lb:"enacted",legalRaw:"Enacted",bb:"binding",bindRaw:"Binding",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025-08-01",eff:"2025-08-01",target:"Patients, clients, and licensed professionals",tech:["GenAI specific","Chatbot specific","Consumer-facing"],req:["Human oversight","Disclosure","Enforcement"]},
+    {r:"United States of America",lvl:"Subnational",sub:"Nevada",st:"Official law / regulation",gen:"Yes",agency:"Nevada Legislature; behavioral health boards",title:"AB 406 - AI in psychotherapeutic services",url:"https://archive.leg.state.nv.us/Session/83rd2025/Bills/AB/AB406_EN.pdf",inst:"Law / regulation",lb:"enacted",legalRaw:"Enacted",bb:"binding",bindRaw:"Binding",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025",eff:"2025-07-01",target:"Patients, consumers, licensed professionals",tech:["GenAI specific","Chatbot specific","Consumer-facing"],req:["Human oversight","Enforcement"]},
+    {r:"United States of America",lvl:"Subnational",sub:"Utah",st:"Official law / regulation",gen:"Yes",agency:"Utah Dept. of Commerce; Office of AI Policy",title:"AI Policy Act and 2025 amendments (mental-health chatbot transparency)",url:"https://le.utah.gov/~2024/bills/static/SB0149.html",inst:"Law / regulation",lb:"enacted",legalRaw:"In force / amended",bb:"binding",bindRaw:"Binding",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2024-03-13",eff:"2025-05-07",target:"Consumers and people seeking mental-health services",tech:["GenAI specific","Chatbot specific","Consumer-facing"],req:["Disclosure","Privacy","Enforcement"]},
+    {r:"United Kingdom",lvl:"National",st:"Official government guidance",gen:"Unknown",agency:"Dept. for Science, Innovation and Technology",title:"Understanding artificial intelligence ethics and safety",url:"https://www.gov.uk/guidance/understanding-artificial-intelligence-ethics-and-safety",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2019-06",eff:"2019-06",target:"Public-sector organisations, AI developers",tech:[],req:["Crisis escalation","Disclosure","Privacy","Bias/equity","Accountability"]},
+    {r:"United Kingdom",lvl:"National",st:"Official regulator guidance",gen:"Yes",agency:"Medicines and Healthcare Products Regulatory Agency",title:"Digital Mental Health Technology: Regulation and Evaluation",url:"https://www.gov.uk/government/publications/digital-mental-health-technology-qualification-and-classification",inst:"Regulatory guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025-02",eff:"2025-02-01",target:"Manufacturers and developers of digital mental-health tech",tech:["GenAI specific","Medical device (SaMD)","Consumer-facing"],req:["Clinical validation","Safety monitoring","Privacy","Bias/equity","Accountability"]},
+    {r:"United Kingdom",lvl:"Subnational",sub:"England",st:"Official regulator guidance",gen:"No",agency:"National Institute for Health and Care Excellence",title:"Evidence standards framework for digital health technologies",url:"https://www.nice.org.uk/what-nice-does/digital-health/evidence-standards-framework-esf-for-digital-health-technologies",inst:"Framework",lb:"active",legalRaw:"Published framework",bb:"guidance",bindRaw:"Guidance / policy",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2018-12",eff:"2018-12",target:"NHS commissioners and evaluators",tech:["Medical device (SaMD)"],req:["Disclosure","Privacy","Bias/equity","Accountability"]},
+    {r:"United Kingdom",lvl:"Subnational",sub:"England",st:"Official government guidance",gen:"No",agency:"NHS England",title:"Principles for using digital technologies in mental-health inpatient care",url:"https://www.england.nhs.uk/long-read/principles-for-using-digital-technologies-in-mental-health-inpatient-treatment-and-care/",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025-02-07",eff:"N/A",target:"NHS-funded mental-health inpatient services",tech:[],req:["Human oversight","Safety monitoring","Crisis escalation","Disclosure","Privacy","Bias/equity","Accountability"]},    {r:"Finland",lvl:"National",st:"Official law / regulation",gen:"Partial",agency:"Finnish Transport and Communications Agency (Traficom)",title:"Act on the Supervision of Certain AI Systems (1377/2025)",url:"https://www.finlex.fi/en/legislation/2025/1377",inst:"Law / regulation",lb:"enacted",legalRaw:"In force",bb:"binding",bindRaw:"Binding",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2025-12-22",eff:"2026-01-01",target:"Providers, deployers, importers, distributors of AI in Finland",tech:["Medical device (SaMD)"],req:["Human oversight","Crisis escalation","Privacy","Bias/equity","Enforcement"]},
+    {r:"Switzerland",lvl:"National",st:"Official government guidance",gen:"No",agency:"Federal Council",title:"Guidelines on Artificial Intelligence for the Confederation",url:"https://www.sbfi.admin.ch/sbfi/en/home/eri-policy/artificial-intelligence.html",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2020-11-25",eff:"2020-11-25",target:"Federal agencies and external partners",tech:[],req:["Human oversight","Crisis escalation","Privacy","Bias/equity","Accountability"]},
+    {r:"Denmark",lvl:"National",st:"Official law / regulation",gen:"No",agency:"Danish Health Authority",title:"Act on Supplementary Provisions to the AI Regulation",url:"https://www.retsinformation.dk/eli/lta/2025/467/pdf",inst:"Law / regulation",lb:"enacted",legalRaw:"In force",bb:"binding",bindRaw:"Binding",mb:"implied",mhRaw:"Implied applicability to mental health",pub:"2025-02-26",eff:"2025-08-02",target:"AI providers and commissioners in the EU",tech:[],req:["Crisis escalation","Privacy","Bias/equity","Accountability","Enforcement"]},
+    {r:"Norway",lvl:"National",st:"Official policy standard",gen:"Partial",agency:"Norwegian Directorate of Health",title:"Joint AI plan for safe and effective use of AI in health and care 2024-2025",url:"https://www.helsedirektoratet.no/rapporter/joint-ai-plan-for-the-safe-and-effective-use-of-ai-in-the-norwegian-health-and-care-services-2024-2025/summary",inst:"Standard / plan",lb:"active",legalRaw:"In force",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2025-02-18",eff:"2025-02-18",target:"Norwegian health and care services",tech:[],req:[]},
+    {r:"Sweden",lvl:"National",st:"Official policy standard",gen:"No",agency:"Government Offices of Sweden",title:"Sweden's AI Strategy",url:"https://www.government.se/contentassets/4e6b2d34f81048d688c35c831065395f/swedens-ai-strategy.pdf",inst:"Strategy",lb:"active",legalRaw:"Published framework",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2026-02-25",eff:"2026-02-25",target:"Government AI work across Sweden",tech:[],req:[]},
+    {r:"Spain",lvl:"National",st:"Official regulator guidance",gen:"Partial",agency:"Spanish Agency for Artificial Intelligence (AESIA)",title:"AESIA compliance guides (16)",url:"https://aesia.digital.gob.es/en/guides",inst:"Standard / guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2025-12-10",eff:"2025-12-10",target:"Companies and individuals applying the EU AI Act",tech:[],req:["Enforcement"]},
+    {r:"Ireland",lvl:"National",st:"Official policy standard",gen:"No",agency:"Dept. of Health and Health Service Executive",title:"AI for Care: AI Strategy for Healthcare in Ireland 2026-2030",url:"https://assets.gov.ie/static/documents/b13b9ebc/AI_for_Care_2026-2030_Final_for_web.pdf",inst:"Strategy",lb:"active",legalRaw:"Published framework",bb:"guidance",bindRaw:"Guidance / policy",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2026-03-11",eff:"2026-03-11",target:"Irish citizens and public health populations",tech:["Medical device (SaMD)"],req:["Accountability","Enforcement"]},
+    {r:"China",lvl:"National",st:"Official law / regulation",gen:"No",agency:"Cyberspace Administration of China",title:"Provisional Measures on Human-like Interaction Services Using AI",url:"https://www.cac.gov.cn/2026-04/10/c_1777558395078289.htm",inst:"Law / regulation",lb:"enacted",legalRaw:"In force",bb:"binding",bindRaw:"Binding",mb:"broad",mhRaw:"Broad AI rule only (self-harm content prohibited)",pub:"2026-02-02",eff:"2026-07-15",target:"All users, developers, providers",tech:[],req:["Disclosure","Accountability","Enforcement"]},
+    {r:"Hong Kong",lvl:"Municipal",st:"Official government guidance",gen:"Yes",agency:"Digital Policy Office",title:"HK Generative AI Technical and Application Guideline",url:"https://www.digitalpolicy.gov.hk/en/our_work/data_governance/policies_standards/ethical_ai_framework/",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2025-04-15",eff:"2025-04-15",target:"Developers, providers, and users of GenAI",tech:["GenAI specific"],req:["Privacy"]},
+    {r:"Hong Kong",lvl:"Municipal",st:"Official regulator guidance",gen:"Partial",agency:"Department of Health",title:"MDACS: Artificial Intelligence Medical Devices (AI-MD)",url:"https://www.mdd.gov.hk/filemanager/common/mdacs/TR008.pdf",inst:"Regulatory guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2024-01-03",eff:"2024-01-03",target:"AI-MD providers",tech:["Medical device (SaMD)"],req:[]},
+    {r:"Hong Kong",lvl:"Municipal",st:"Official regulator guidance",gen:"Yes",agency:"Hong Kong Monetary Authority",title:"Consumer Protection in respect of Use of Generative AI",url:"https://brdr.hkma.gov.hk/eng/doc-ldg/docId/getPdf/20241107-1-EN/20241107-1-EN.pdf",inst:"Regulatory guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2024-08-19",eff:"2024-08-19",target:"Authorized institutions",tech:["GenAI specific","Consumer-facing"],req:["Privacy","Bias/equity","Accountability"]},
+    {r:"South Korea",lvl:"National",st:"Official law / regulation",gen:"No",agency:"Ministry of Science and ICT",title:"Framework Act on the Development of AI and Establishment of Trust",url:"https://cset.georgetown.edu/wp-content/uploads/t0625_south_korea_ai_law_EN.pdf",inst:"Law / regulation",lb:"enacted",legalRaw:"In force",bb:"binding",bindRaw:"Binding",mb:"broad",mhRaw:"Broad AI rule only",pub:"2024-12-26",eff:"2026-01-22",target:"Anyone receiving AI products/services; AI companies",tech:[],req:["Human oversight","Enforcement"]},
+    {r:"Japan",lvl:"National",st:"Official government guidance",gen:"Yes",agency:"Ministry of Internal Affairs / METI",title:"AI Guidelines for Business ver1.2",url:"https://www.meti.go.jp/shingikai/mono_info_service/ai_shakai_jisso/pdf/20260331_12.pdf",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"implied",mhRaw:"Implied applicability to mental health",pub:"2026-03-31",eff:"N/A",target:"AI developers, providers, business users, and people exposed to AI",tech:["GenAI specific","Consumer-facing"],req:["Disclosure","Privacy","Bias/equity","Accountability"]},
+    {r:"Japan",lvl:"National",st:"Official government guidance",gen:"No",agency:"Ministry of Health, Labour and Welfare",title:"Guidelines for Utilization of Medical Digital Data for AI R&D",url:"https://www.mhlw.go.jp/content/001310044.pdf",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2024-03-31",eff:"N/A",target:"Medical, academic, and private-sector developers",tech:["Medical device (SaMD)"],req:["Privacy"]},
+    {r:"India",lvl:"Agency-specific",st:"Official / quasi-official framework",gen:"No",agency:"Indian Psychiatric Society",title:"Clinical Practice Guidelines on using AI and gadgets for mental health",url:"https://journals.lww.com/indianjpsychiatry/fulltext/2024/66002/clinical_practice_guidelines_on_using_artificial.21.aspx",inst:"Standard / guidance",lb:"active",legalRaw:"Published guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2024-01-24",eff:"N/A",target:"Mental-health professionals and people receiving support",tech:["Chatbot specific","Consumer-facing"],req:["Accountability"]},
+    {r:"Israel",lvl:"National",st:"Official government guidance",gen:"No",agency:"Ministry of Health, Mental Health Division",title:"Digital and Technological Approaches to Mental Health Treatment",url:"https://me.health.gov.il/en/mental-health/information-and-updates/mental-health-care/digital-care/",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2025-09-03",eff:"N/A",target:"Patients, professionals, and users of remote services",tech:["Consumer-facing"],req:["Human oversight","Crisis escalation","Privacy"]},
+    {r:"New Zealand",lvl:"National",st:"Official government guidance",gen:"Yes",agency:"Ministry of Health / Health NZ",title:"Using generative AI and large language models",url:"https://www.healthnz.govt.nz/health-professionals/guidance-standards/topic/digital-technologies/using-generative-ai-and-large-language-models",inst:"Government guidance",lb:"active",legalRaw:"Published guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"broad",mhRaw:"Broad AI rule only",pub:"2024-08",eff:"2024-08",target:"Clinical staff",tech:["GenAI specific","Medical device (SaMD)"],req:["Human oversight","Clinical validation","Privacy","Bias/equity","Accountability"]},
+    {r:"United Arab Emirates",lvl:"National",st:"Official policy standard",gen:"No",agency:"Department of Health, Abu Dhabi",title:"Responsible Artificial Intelligence Standard",url:"https://www.doh.gov.ae/-/media/B84FF5DD027846699C51F36C439A580F.ashx",inst:"Standard / guidance",lb:"active",legalRaw:"Active guidance",bb:"guidance",bindRaw:"Guidance / policy",mb:"adjacent",mhRaw:"Adjacent health/AI rule",pub:"2025-10",eff:"2025-10",target:"DoH and licensed healthcare entities in Abu Dhabi",tech:[],req:["Enforcement"]},
+  ];
+
+  var SUPRA_FALLBACK = [
+    {body:"WHO",r:"World Health Organization",lvl:"Supranational",st:"Other",gen:"Yes",agency:"World Health Organization",title:"Towards responsible AI for mental health and well-being",url:"https://www.who.int/news/item/20-03-2026-towards-responsible-ai-for-mental-health-and-well-being--experts-chart-a-way-forward",inst:"Expert recommendations",lb:"active",legalRaw:"Active guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2026-03-20",eff:"N/A",target:"General population; young and emotionally vulnerable users",tech:["GenAI specific"],req:["Safety monitoring","Accountability"]},
+    {body:"OECD",r:"OECD",lvl:"Supranational",st:"Official / quasi-official framework",gen:"Yes",agency:"Organisation for Economic Co-operation and Development",title:"Recommendation of the Council on AI (OECD AI Principles)",url:"https://oecd.ai/en/assets/files/OECD-LEGAL-0449-en.pdf",inst:"Framework",lb:"active",legalRaw:"Published framework",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"broad",mhRaw:"Broad AI rule only",pub:"2024-05-03",eff:"N/A",target:"General population",tech:["GenAI specific"],req:["Human oversight","Safety monitoring","Disclosure","Privacy","Bias/equity","Accountability"]},
+    {body:"UNESCO",r:"UNESCO",lvl:"Supranational",st:"Official policy standard",gen:"No",agency:"UN Educational, Scientific and Cultural Organization",title:"Recommendation on the Ethics of Artificial Intelligence",url:"https://unesdoc.unesco.org/ark:/48223/pf0000380455",inst:"Standard",lb:"active",legalRaw:"Active guidance",bb:"voluntary",bindRaw:"Voluntary / soft law",mb:"explicit",mhRaw:"Explicit mental-health regulation",pub:"2022",eff:"N/A",target:"General population; children and youth",tech:["Chatbot specific"],req:["Human oversight","Clinical validation","Safety monitoring","Crisis escalation","Disclosure","Privacy","Bias/equity","Accountability"]},
+    {body:"EU AI Act",r:"European Union",lvl:"Supranational",st:"Official law / regulation",gen:"Partial",agency:"European Parliament and Council",title:"Regulation (EU) 2024/1689 - AI Act (manipulation, psychological harm, transparency)",url:"https://eur-lex.europa.eu/eli/reg/2024/1689/oj",inst:"Law / regulation",lb:"enacted",legalRaw:"In force",bb:"binding",bindRaw:"Binding",mb:"implied",mhRaw:"Implied applicability to AI companionship / mental health",pub:"2024-06-13",eff:"2024-08-01",target:"Users, minors, vulnerable persons",tech:["GenAI specific"],req:["Disclosure","Privacy","Bias/equity","Accountability","Enforcement"]}
+  ];
+
+  // Build the whole dashboard from a given dataset. Called once with
+  // live data from /api/data, or with the baked snapshot on failure.
+  function start(P, SUPRA, UPDATED) {
+
+  /* ============================================================
+     2. LOOKUP TABLES
+
+     ALIAS  maps common country name variants to the canonical
+            world-atlas feature name.
+     LB/BB/MB   color + display label for each coded value of
+            legal status / bindingness / MH relevance.
+     ANY    single color used in the plain "Any policy" mode.
+     LR/BR/MR   rank maps: when a country has several policies we
+            color it by the *strongest* one, so higher = stronger.
+     REQORDER   canonical ordering for the requirement-flag filter.
+     ============================================================ */
+  var ALIAS = {
+    "united states": "United States of America",
+    "usa": "United States of America",
+    "us": "United States of America",
+    "uk": "United Kingdom",
+    "great britain": "United Kingdom",
+    "britain": "United Kingdom",
+    "korea, rep.": "South Korea",
+    "republic of korea": "South Korea"
+  };
+
+  var LB = {
+    enacted:     {c: "#2e9e6b", t: "In force / enacted"},
+    active:      {c: "#3d7fd1", t: "Active guidance / framework"},
+    proposed:    {c: "#e0a24b", t: "Proposed / draft"},
+    unspecified: {c: "#8b93a1", t: "Pending / not coded"}
+  };
+  var BB = {
+    binding:     {c: "#d9534f", t: "Binding"},
+    guidance:    {c: "#3d7fd1", t: "Guidance / policy"},
+    voluntary:   {c: "#2fa89a", t: "Voluntary / soft law"},
+    proposed:    {c: "#e0a24b", t: "Proposed / not yet binding"},
+    unspecified: {c: "#8b93a1", t: "Pending / not coded"}
+  };
+  var MB = {
+    explicit:    {c: "#5b3fbf", t: "Explicit mental-health"},
+    implied:     {c: "#8579d9", t: "Implied applicability"},
+    adjacent:    {c: "#b3ace8", t: "Adjacent health/AI"},
+    broad:       {c: "#d9d5f2", t: "Broad AI rule only"},
+    unspecified: {c: "#8b93a1", t: "Pending / not coded"}
+  };
+  var ANY = {c: "#3d7fd1"};
+
+  // Sequential ramp for the "# of policies" color mode (light -> dark).
+  var CNT = [
+    {min: 1, c: "#dbe8f6", t: "1"},
+    {min: 2, c: "#a9cae9", t: "2"},
+    {min: 3, c: "#6ba7d6", t: "3"},
+    {min: 4, c: "#3d7fd1", t: "4"},
+    {min: 5, c: "#2861a6", t: "5"},
+    {min: 6, c: "#173f6b", t: "6+"}
+  ];
+
+  var LR = {enacted: 3, active: 2, proposed: 1, unspecified: 0};
+  var BR = {binding: 4, guidance: 3, voluntary: 2, proposed: 1, unspecified: 0};
+  var MR = {explicit: 4, implied: 3, adjacent: 2, broad: 1, unspecified: 0};
+
+  var REQORDER = [
+    "Human oversight", "Clinical validation", "Safety monitoring",
+    "Crisis escalation", "Disclosure", "Privacy", "Bias/equity",
+    "Accountability", "Enforcement"
+  ];
+
+  /* ============================================================
+     3. HELPERS
+     ============================================================ */
+  function norm(s) {
+    return (s || "").toLowerCase().replace(/\./g, "").trim();
+  }
+  function has(p, tech) {
+    return p.tech.indexOf(tech) >= 0;
+  }
+  function mhFocus(p) {
+    if (p.mb === "explicit")    return "Yes";
+    if (p.mb === "implied")     return "Partial";
+    if (p.mb === "unspecified") return "Not coded";
+    return "No";
+  }
+
+  // Parse a publication date ("YYYY", "YYYY-MM", or "YYYY-MM-DD") into a
+  // month index (year*12 + month-1) for timeline comparisons; a year-only
+  // value counts as January. Returns null when no date is present.
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function pubMonths(p) {
+    var m = /^(\d{4})(?:-(\d{1,2}))?/.exec(p.pub || "");
+    if (!m) return null;
+    return (+m[1]) * 12 + ((m[2] ? +m[2] : 1) - 1);
+  }
+  function fmtMonth(idx) { return MON[idx % 12] + " " + Math.floor(idx / 12); }
+
+  /* ============================================================
+     4. INDEX POLICIES BY COUNTRY
+     byC[country] = { name, nat:[...], subs:{state:[...]}, all:[...] }
+     lookup / resolve let map-feature names find the right entry.
+     ============================================================ */
+  var byC = {};
+  P.forEach(function (p) {
+    var k = p.r;
+    byC[k] = byC[k] || {name: k, nat: [], subs: {}, all: []};
+    byC[k].all.push(p);
+    if (p.lvl === "Subnational") {
+      byC[k].subs[p.sub] = byC[k].subs[p.sub] || [];
+      byC[k].subs[p.sub].push(p);
+    } else {
+      byC[k].nat.push(p);
+    }
+  });
+
+  var lookup = {};
+  Object.keys(byC).forEach(function (k) { lookup[norm(k)] = byC[k]; });
+
+  function resolve(name) {
+    var n = norm(name);
+    if (lookup[n]) return lookup[n];
+    if (ALIAS[n] && lookup[norm(ALIAS[n])]) return lookup[norm(ALIAS[n])];
+    return null;
+  }
+
+  /* ============================================================
+     5. FILTERS
+     Each filter reads a value off a policy via get(). "multi"
+     filters (requirement flags) test membership in an array.
+     FSTATE holds the current dropdown selection per filter.
+     ============================================================ */
+  // GenAI-specific and MH/companion-focus collapse their raw values
+  // into three buckets: Yes, a combined middle bucket, then No.
+  function genBucket(p) {
+    if (p.gen === "Yes") return "Yes";
+    if (p.gen === "No")  return "No";
+    return "Partial / unknown";        // Partial + Unknown
+  }
+  function mhFocusBucket(p) {
+    var v = mhFocus(p);
+    if (v === "Yes") return "Yes";
+    if (v === "No")  return "No";
+    return "Partial / not coded";       // Partial + Not coded
+  }
+
+  // Each filter declares:
+  //   type  "select" (dropdown, default) | "check" (Yes/off checkbox)
+  //   opts  explicit option list for a select (else derived from data)
+  //   multi value is an array; an option matches if it's a member
+  var FILTERS = [
+    {key: "source",   label: "Source type",           type: "select", get: function (p) { return p.st; }},
+    {key: "gen",      label: "GenAI specific?",        type: "select", get: genBucket,     opts: ["Yes", "Partial / unknown", "No"]},
+    {key: "mhfocus",  label: "MH / companion focus?",  type: "select", get: mhFocusBucket, opts: ["Yes", "Partial / not coded", "No"]},
+    {key: "samd",     label: "Medical device / SaMD?", type: "check",  get: function (p) { return has(p, "Medical device (SaMD)") ? "Yes" : "No"; }},
+    {key: "chatbot",  label: "Chatbot / agent?",       type: "check",  get: function (p) { return has(p, "Chatbot specific") ? "Yes" : "No"; }},
+    {key: "consumer", label: "Consumer-facing AI?",    type: "check",  get: function (p) { return has(p, "Consumer-facing") ? "Yes" : "No"; }},
+    {key: "mhexpl",   label: "MH explicit?",           type: "check",  get: function (p) { return p.mb === "explicit" ? "Yes" : "No"; }},
+    {key: "req",      label: "Requirement flag",       type: "select", get: function (p) { return p.req; }, multi: true}
+  ];
+
+  var FSTATE = {};
+  FILTERS.forEach(function (f) { FSTATE[f.key] = "All"; });
+
+  var ALLP = P.concat(SUPRA);
+
+  // Precompute each policy's publication month and the timeline's range.
+  ALLP.forEach(function (p) { p._pm = pubMonths(p); });
+  var months = ALLP.map(function (p) { return p._pm; }).filter(function (x) { return x != null; });
+  var MINM = Math.min.apply(null, months);
+  var MAXM = Math.max.apply(null, months);
+  var TIMECUT = MAXM;   // show only policies published on or before this month
+
+  // True if a policy satisfies every active (non-"All") filter and falls
+  // on or before the current timeline cutoff. Undated policies always pass.
+  function passes(p) {
+    if (p._pm != null && p._pm > TIMECUT) return false;
+    for (var i = 0; i < FILTERS.length; i++) {
+      var f = FILTERS[i], v = FSTATE[f.key];
+      if (v && v !== "All") {
+        if (f.multi) {
+          if ((p.req || []).indexOf(v) < 0) return false;
+        } else if (f.get(p) !== v) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // Policies of a country entry that pass the current filters.
+  function visible(d) { return d.all.filter(passes); }
+
+  /* ============================================================
+     6. COLOR MODES
+     Countries can be colored by policy presence, legal status,
+     bindingness, or MH relevance (using the strongest policy).
+     ============================================================ */
+  var MODE = "any";
+  var MODES = [
+    ["any",   "Any policy"],
+    ["count", "# of policies"],
+    ["lb",    "Legal status"],
+    ["bb",    "Bindingness"],
+    ["mb",    "MH relevance"]
+  ];
+
+  // Fill color for a set of (already filtered) policies.
+  function colorForCount(n) {
+    for (var i = CNT.length - 1; i >= 0; i--) { if (n >= CNT[i].min) return CNT[i].c; }
+    return CNT[0].c;
+  }
+  function colorPols(pols) {
+    if (!pols.length) return null;
+    if (MODE === "any") return ANY.c;
+    if (MODE === "count") return colorForCount(pols.length);
+    if (MODE === "lb") {
+      var lb = pols.reduce(function (a, p) { return LR[p.lb] > LR[a] ? p.lb : a; }, "unspecified");
+      return LB[lb].c;
+    }
+    if (MODE === "bb") {
+      var bb = pols.reduce(function (a, p) { return BR[p.bb] > BR[a] ? p.bb : a; }, "unspecified");
+      return BB[bb].c;
+    }
+    var mb = pols.reduce(function (a, p) { return MR[p.mb] > MR[a] ? p.mb : a; }, "unspecified");
+    return MB[mb].c;
+  }
+
+  /* ============================================================
+     7. DOM REFERENCES + HEADER META
+     ============================================================ */
+  var root = document.getElementById("mhp");
+  var tip  = document.getElementById("tip");
+  var ovl  = document.getElementById("ovl");
+
+  var countryCount = Object.keys(byC).length;
+  var totalCount   = ALLP.length;
+  document.getElementById("meta3").textContent =
+    "Updated " + UPDATED + " · " + totalCount + " policies · " + countryCount + " countries";
+
+  /* ============================================================
+     8. BUILD "COLOR BY" MODE BUTTONS
+     ============================================================ */
+  var modesEl = document.getElementById("modes");
+  MODES.forEach(function (m, i) {
+    var b = document.createElement("button");
+    b.className = "btn" + (i === 0 ? " on" : "");
+    b.textContent = m[1];
+    b.onclick = function () {
+      MODE = m[0];
+      [].forEach.call(modesEl.querySelectorAll(".btn"), function (x) { x.classList.remove("on"); });
+      b.classList.add("on");
+      apply();
+    };
+    modesEl.appendChild(b);
+  });
+
+  /* ============================================================
+     9. BUILD FILTER DROPDOWNS (+ reset button)
+     ============================================================ */
+  var filtersEl = document.getElementById("filters");
+  FILTERS.forEach(function (f) {
+    var g = document.createElement("div");
+    g.className = "fg";
+
+    // Checkbox filter: checked keeps only the "Yes" policies.
+    if (f.type === "check") {
+      g.className = "fg check";
+      var lc = document.createElement("label");
+      lc.className = "chk";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.onchange = function () { FSTATE[f.key] = cb.checked ? "Yes" : "All"; apply(); };
+      lc.appendChild(cb);
+      lc.appendChild(document.createTextNode(f.label));
+      g.appendChild(lc);
+      filtersEl.appendChild(g);
+      return;
+    }
+
+    // Select filter. Option list: explicit (opts), fixed requirement
+    // order (multi), or the sorted distinct values found in the data.
+    var opts;
+    if (f.opts) {
+      opts = f.opts.slice();
+    } else if (f.multi) {
+      opts = REQORDER.slice();
+    } else {
+      var set = {};
+      ALLP.forEach(function (p) {
+        var v = f.get(p);
+        if (v != null && v !== "") set[v] = 1;
+      });
+      opts = Object.keys(set).sort();
+    }
+
+    var lab = document.createElement("label");
+    lab.textContent = f.label;
+
+    var sel = document.createElement("select");
+    var oAll = document.createElement("option");
+    oAll.value = "All";
+    oAll.textContent = "All";
+    sel.appendChild(oAll);
+    opts.forEach(function (o) {
+      var op = document.createElement("option");
+      op.value = o;
+      op.textContent = o;
+      sel.appendChild(op);
+    });
+    sel.onchange = function () { FSTATE[f.key] = sel.value; apply(); };
+
+    g.appendChild(lab);
+    g.appendChild(sel);
+    filtersEl.appendChild(g);
+  });
+
+  // Reset: clear every filter back to "All".
+  var rg = document.createElement("div");
+  rg.className = "fg";
+  var rl = document.createElement("label");
+  rl.innerHTML = "&nbsp;";
+  var rb = document.createElement("button");
+  rb.className = "btn";
+  rb.innerHTML = '<i class="ti ti-refresh" aria-hidden="true"></i>Reset';
+  rb.onclick = function () {
+    FILTERS.forEach(function (f) { FSTATE[f.key] = "All"; });
+    [].forEach.call(filtersEl.querySelectorAll("select"), function (s) { s.value = "All"; });
+    [].forEach.call(filtersEl.querySelectorAll("input[type=checkbox]"), function (c) { c.checked = false; });
+    apply();
+  };
+  rg.appendChild(rl);
+  rg.appendChild(rb);
+  filtersEl.appendChild(rg);
+
+  /* ============================================================
+     9b. TIMELINE / ROLLOUT SLIDER
+     Drag (or press Play) to move the cutoff month; the map, panel,
+     and counts then show only policies published on or before it,
+     revealing how coverage rolled out over time.
+     ============================================================ */
+  var slider  = document.getElementById("tslider");
+  var tlab    = document.getElementById("tlab");
+  var playBtn = document.getElementById("play");
+  slider.min = MINM;
+  slider.max = MAXM;
+  slider.value = MAXM;
+
+  function setTimeLabel() {
+    tlab.textContent = (TIMECUT >= MAXM ? "All · to " : "As of ") + fmtMonth(TIMECUT);
+  }
+  slider.oninput = function () {
+    stopPlay();
+    TIMECUT = +slider.value;
+    setTimeLabel();
+    apply();
+  };
+
+  var timer = null;
+  function playIcon(on) {
+    playBtn.innerHTML = '<i class="ti ti-player-' + (on ? "pause" : "play") + '" aria-hidden="true"></i>';
+  }
+  function stopPlay() {
+    if (timer) { clearInterval(timer); timer = null; }
+    playIcon(false);
+  }
+  function startPlay() {
+    if (TIMECUT >= MAXM) TIMECUT = MINM;   // finished? restart from the beginning
+    playIcon(true);
+    timer = setInterval(function () {
+      TIMECUT++;
+      slider.value = TIMECUT;
+      setTimeLabel();
+      apply();
+      if (TIMECUT >= MAXM) stopPlay();
+    }, 75);
+  }
+  playBtn.onclick = function () { if (timer) stopPlay(); else startPlay(); };
+
+  setTimeLabel();
+
+  /* ============================================================
+     10. BUILD SUPRANATIONAL FRAMEWORK BUTTONS
+     ============================================================ */
+  var supraEl = document.getElementById("supra");
+  SUPRA.forEach(function (s) {
+    var b = document.createElement("button");
+    b.className = "btn";
+    b.dataset.body = s.body;
+    b.innerHTML = '<i class="ti ti-world" aria-hidden="true"></i>' + s.body;
+    b.onclick = function () { selectSupra(s); };
+    supraEl.appendChild(b);
+  });
+
+  /* ============================================================
+     11. DARK-MODE TOGGLE + PANEL CLOSE
+     ============================================================ */
+  document.getElementById("dark").onclick = function () {
+    root.classList.toggle("dark");
+    var on = root.classList.contains("dark");
+    this.querySelector("span").textContent = on ? "Light" : "Dark";
+    this.querySelector("i").className = on ? "ti ti-sun" : "ti ti-moon";
+    recolor();
+  };
+  document.getElementById("pclose").onclick = function () {
+    reopen = null;
+    defaultPanel();
+  };
+
+  /* ============================================================
+     12. CARD RENDERING
+     ============================================================ */
+  function chip(txt, color) {
+    return '<span class="chip">' +
+      (color ? '<span class="dot" style="background:' + color + '"></span>' : '') +
+      txt + '</span>';
+  }
+
+  function card(p) {
+    var h = '<div class="card"><div class="ct">' +
+      (p.url ? '<a href="' + p.url + '" target="_blank" rel="noopener">' + p.title + '</a>' : p.title) +
+      '</div>';
+    h += '<div class="ag">' + p.agency + '</div>';
+    h += '<div class="chips">' +
+      chip(p.lvl) + chip(p.inst) +
+      chip(p.legalRaw, LB[p.lb].c) + chip(p.bindRaw, BB[p.bb].c) +
+      '</div>';
+    h += '<div class="meta">' +
+      '<div><div class="k">Ministry / agency</div><div class="v">' + p.agency + '</div></div>' +
+      '<div><div class="k">Target population</div><div class="v">' + p.target + '</div></div>' +
+      '<div><div class="k">MH relevance</div><div class="v">' + p.mhRaw + '</div></div>' +
+      '<div><div class="k">Source type</div><div class="v">' + p.st + '</div></div>' +
+      '<div><div class="k">Published</div><div class="v">' + p.pub + '</div></div>' +
+      '<div><div class="k">Effective</div><div class="v">' + p.eff + '</div></div>' +
+      '</div>';
+
+    var tags = "";
+    p.tech.forEach(function (t) { tags += '<span class="tag tech">' + t + '</span>'; });
+    if (p.gen === "Yes") tags += '<span class="tag tech">GenAI specific</span>';
+    p.req.forEach(function (t) { tags += '<span class="tag gov">' + t + '</span>'; });
+    if (tags) h += '<div class="tags">' + tags + '</div>';
+
+    h += '</div>';
+    return h;
+  }
+
+  /* ============================================================
+     13. PANEL RENDERING
+     `reopen` remembers the last selection so it can be re-rendered
+     after the filters change.
+     ============================================================ */
+  var ptitle  = document.getElementById("ptitle");
+  var psub    = document.getElementById("psub");
+  var cardsEl = document.getElementById("cards");
+  var reopen  = null;
+
+  function defaultPanel() {
+    ptitle.textContent = "Policies";
+    psub.textContent = "";
+    cardsEl.innerHTML = '<div class="hint">Select a country, marker, or supranational button to view its policies. Use the filters above to narrow what appears on the map.</div>';
+  }
+
+  function renderPanel(title, sub, groups) {
+    ptitle.textContent = title;
+    psub.textContent = sub;
+    cardsEl.innerHTML = "";
+    var any = false;
+    groups.forEach(function (g) {
+      if (!g.items.length) return;
+      any = true;
+      if (g.label) {
+        var lab = document.createElement("div");
+        lab.className = "grp";
+        lab.textContent = g.label;
+        cardsEl.appendChild(lab);
+      }
+      g.items.forEach(function (p) {
+        var w = document.createElement("div");
+        w.innerHTML = card(p);
+        cardsEl.appendChild(w.firstChild);
+      });
+    });
+    if (!any) {
+      cardsEl.innerHTML = '<div class="hint">No policies here match the current filters. Try resetting a filter above.</div>';
+    }
+  }
+
+  function selectCountry(d) {
+    if (d.name === "United States of America") { showStates(); return; }
+    reopen = function () { selectCountry(d); };
+    var vis = visible(d);
+    var groups = [{label: "", items: d.nat.filter(passes)}];
+    Object.keys(d.subs).forEach(function (s) {
+      groups.push({label: s + " (subnational)", items: d.subs[s].filter(passes)});
+    });
+    renderPanel(
+      d.name,
+      vis.length + " of " + d.all.length + " " + (d.all.length === 1 ? "policy" : "policies") + " shown",
+      groups
+    );
+  }
+
+  function selectState(name) {
+    reopen = function () { selectState(name); };
+    var pols = (byC["United States of America"].subs[name] || []).filter(passes);
+    renderPanel(name, pols.length + " state " + (pols.length === 1 ? "policy" : "policies"), [{label: "", items: pols}]);
+  }
+
+  function selectSupra(s) {
+    reopen = function () { selectSupra(s); };
+    renderPanel(s.r, "Supranational framework", [{label: "", items: passes(s) ? [s] : []}]);
+  }
+
+  /* ============================================================
+     14. MAP GLOBALS
+     Standalone markers (MK) are drawn for small territories that
+     are hard to click on the world outline; MKC holds their
+     [lon, lat] centroids.
+     ============================================================ */
+  var W = 680, H = 372;
+  var svg, gWorld, gStates, proj, pathGen;
+  var statesReady = false;
+
+  var MK = [
+    {name: "Singapore"}, {name: "Hong Kong"},
+    {name: "Israel"},    {name: "United Arab Emirates"}
+  ];
+  var MKC = {
+    "Singapore":            [103.8, 1.35],
+    "Hong Kong":            [114.15, 22.3],
+    "Israel":               [34.9, 31.4],
+    "United Arab Emirates": [54.3, 24.2]
+  };
+
+  /* ============================================================
+     15. LEGEND / COUNTS / RECOLOR
+     ============================================================ */
+  function legend() {
+    var el = document.getElementById("legend");
+    var items, ttl;
+    if (MODE === "any") {
+      ttl = "Policy presence";
+      items = [[ANY.c, "Has policy"]];
+    } else if (MODE === "count") {
+      ttl = "Number of policies";
+      items = CNT.map(function (c) { return [c.c, c.t]; });
+    } else if (MODE === "lb") {
+      ttl = "Legal status (strongest)";
+      items = Object.keys(LB).map(function (k) { return [LB[k].c, LB[k].t]; });
+    } else if (MODE === "bb") {
+      ttl = "Bindingness (strongest)";
+      items = Object.keys(BB).map(function (k) { return [BB[k].c, BB[k].t]; });
+    } else {
+      ttl = "Mental-health relevance";
+      items = Object.keys(MB).map(function (k) { return [MB[k].c, MB[k].t]; });
+    }
+
+    var noPolicy = root.classList.contains("dark") ? "#333a45" : "#dde2e6";
+    var h = '<div class="lt">' + ttl + '</div>';
+    items.forEach(function (it) {
+      h += '<div class="row"><span class="sw" style="background:' + it[0] + '"></span>' + it[1] + '</div>';
+    });
+    h += '<div class="row"><span class="sw" style="background:' + noPolicy + '"></span>No policy</div>';
+    el.innerHTML = h;
+  }
+
+  function updateCounts() {
+    var show = ALLP.filter(passes).length;
+    document.getElementById("fmeta").textContent = "Showing " + show + " of " + totalCount + " policies";
+    // Dim supranational buttons whose framework is filtered out.
+    [].forEach.call(supraEl.querySelectorAll(".btn"), function (b) {
+      var s = SUPRA.filter(function (x) { return x.body === b.dataset.body; })[0];
+      b.classList.toggle("dim", !(s && passes(s)));
+    });
+  }
+
+  function recolor() {
+    if (!svg) return;
+    var noPolicy = root.classList.contains("dark") ? "#333a45" : "#dde2e6";
+    var stroke   = root.classList.contains("dark") ? "#1b1e25" : "#ffffff";
+
+    gWorld.selectAll("path.land")
+      .attr("fill", function (d) {
+        var r = resolve(d.properties.name);
+        return (r ? colorPols(visible(r)) : null) || noPolicy;
+      })
+      .attr("stroke", stroke)
+      .classed("has", function (d) { return !!resolve(d.properties.name); });
+
+    gWorld.selectAll("circle.mk")
+      .attr("fill", function (d) {
+        var r = resolve(d.name);
+        return (r ? colorPols(visible(r)) : null) || noPolicy;
+      })
+      .attr("stroke", stroke);
+
+    if (gStates) {
+      gStates.selectAll("path.st")
+        .attr("fill", function (d) {
+          var pols = (byC["United States of America"].subs[d.properties.name] || []).filter(passes);
+          return colorPols(pols) || noPolicy;
+        })
+        .attr("stroke", stroke);
+    }
+    legend();
+  }
+
+  // Re-run everything after a filter/mode change.
+  function apply() {
+    recolor();
+    updateCounts();
+    if (reopen) reopen();
+    else defaultPanel();
+  }
+
+  /* ============================================================
+     16. WORLD <-> US-STATES DRILL-DOWN + TOOLTIP TRACKING
+     ============================================================ */
+  function showStates() {
+    document.getElementById("back").style.display = "inline-flex";
+    gWorld.attr("display", "none");
+    if (gStates) gStates.attr("display", null);
+    reopen = showStates;
+    var d = byC["United States of America"];
+    renderPanel(
+      "United States",
+      "Federal policies shown. Select a highlighted state for state-level policies.",
+      [{label: "Federal", items: d.nat.filter(passes)}]
+    );
+  }
+
+  function showWorld() {
+    document.getElementById("back").style.display = "none";
+    if (gStates) gStates.attr("display", "none");
+    gWorld.attr("display", null);
+    reopen = null;
+    defaultPanel();
+  }
+  document.getElementById("back").onclick = showWorld;
+
+  function move(ev) {
+    var r = document.getElementById("mapwrap").getBoundingClientRect();
+    tip.style.left = (ev.clientX - r.left) + "px";
+    tip.style.top  = (ev.clientY - r.top) + "px";
+  }
+
+  /* ============================================================
+     17. BOOT: load D3 + TopoJSON, draw the map
+     Waits for the CDN scripts, draws the world, wires hover/click,
+     then loads US state geometry for the drill-down.
+     ============================================================ */
+  function boot() {
+    if (!window.d3 || !window.topojson) { return setTimeout(boot, 60); }
+    var d3 = window.d3;
+
+    svg = d3.select("#mapwrap").append("svg")
+      .attr("viewBox", "0 0 " + W + " " + H)
+      .attr("width", "100%")
+      .style("display", "block");
+    gWorld  = svg.append("g");
+    gStates = svg.append("g").attr("display", "none");
+    proj    = d3.geoNaturalEarth1();
+    pathGen = d3.geoPath(proj);
+
+    var world = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+    var us    = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+
+    var done = false;
+    var to = setTimeout(function () {
+      if (!done) ovl.textContent = "Could not load map tiles in this environment. Logic is intact; the standalone file loads them reliably.";
+    }, 9000);
+
+    d3.json(world).then(function (topo) {
+      done = true;
+      clearTimeout(to);
+      ovl.style.display = "none";
+
+      var fc = topojson.feature(topo, topo.objects.countries);
+      proj.fitExtent([[6, 6], [W - 6, H - 6]], fc);
+
+      // Countries
+      gWorld.selectAll("path.land").data(fc.features).join("path")
+        .attr("class", "land")
+        .attr("d", pathGen)
+        .on("mousemove", function (ev, d) {
+          var r = resolve(d.properties.name);
+          var n = r ? visible(r).length : 0;
+          tip.style.opacity = 1;
+          tip.textContent = d.properties.name + (r ? " · " + n + " " + (n === 1 ? "policy" : "policies") : " · no policy");
+          move(ev);
+        })
+        .on("mouseleave", function () { tip.style.opacity = 0; })
+        .on("click", function (ev, d) {
+          var r = resolve(d.properties.name);
+          if (r) selectCountry(r);
+        });
+
+      // Small-territory markers
+      gWorld.selectAll("circle.mk").data(MK).join("circle")
+        .attr("class", "mk")
+        .attr("r", 5)
+        .attr("cx", function (d) { return proj(MKC[d.name])[0]; })
+        .attr("cy", function (d) { return proj(MKC[d.name])[1]; })
+        .attr("stroke-width", 1.2)
+        .on("mousemove", function (ev, d) {
+          var r = resolve(d.name);
+          var n = r ? visible(r).length : 0;
+          tip.style.opacity = 1;
+          tip.textContent = d.name + (r ? " · " + n + " " + (n === 1 ? "policy" : "policies") : "");
+          move(ev);
+        })
+        .on("mouseleave", function () { tip.style.opacity = 0; })
+        .on("click", function (ev, d) {
+          var r = resolve(d.name);
+          if (r) selectCountry(r);
+        });
+
+      recolor();
+      updateCounts();
+
+      // US states (for the drill-down view)
+      d3.json(us).then(function (ut) {
+        var sf = topojson.feature(ut, ut.objects.states);
+        var sp = d3.geoAlbersUsa().fitExtent([[6, 6], [W - 6, H - 6]], sf);
+        var spath = d3.geoPath(sp);
+
+        gStates.selectAll("path.st").data(sf.features).join("path")
+          .attr("class", "st")
+          .attr("d", spath)
+          .attr("stroke-width", .6)
+          .style("cursor", function (d) {
+            return byC["United States of America"].subs[d.properties.name] ? "pointer" : "default";
+          })
+          .on("mousemove", function (ev, d) {
+            var pols = (byC["United States of America"].subs[d.properties.name] || []).filter(passes);
+            tip.style.opacity = 1;
+            tip.textContent = d.properties.name +
+              (byC["United States of America"].subs[d.properties.name]
+                ? " · " + pols.length + " " + (pols.length === 1 ? "policy" : "policies")
+                : " · no state policy");
+            move(ev);
+          })
+          .on("mouseleave", function () { tip.style.opacity = 0; })
+          .on("click", function (ev, d) {
+            if (byC["United States of America"].subs[d.properties.name]) selectState(d.properties.name);
+          });
+
+        statesReady = true;
+        recolor();
+      }).catch(function () {});
+    }).catch(function () {
+      done = true;
+      clearTimeout(to);
+      ovl.textContent = "Map data failed to load in this sandbox. The standalone file renders it reliably.";
+    });
+  }
+
+  /* ============================================================
+     18. INIT
+     ============================================================ */
+  defaultPanel();
+  legend();
+  updateCounts();
+  boot();
+
+  }  /* ---- end start() ---- */
+
+  /* ============================================================
+     19. DATA LOADER  (GitHub Pages backup)
+     Load the static data.json that ships beside this page (refreshed
+     by the Pages workflow); fall back to the baked-in snapshot so it
+     never renders blank. Also tries /api/data first, harmlessly, so
+     this file stays identical to the Vercel copy.
+     ============================================================ */
+  function fetchData(url) {
+    return fetch(url, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(url + " " + r.status);
+      return r.json();
+    });
+  }
+  function useData(d) {
+    start(
+      (d && d.P && d.P.length) ? d.P : P_FALLBACK,
+      (d && d.SUPRA && d.SUPRA.length) ? d.SUPRA : SUPRA_FALLBACK,
+      (d && d.updated) || UPDATED_FALLBACK
+    );
+  }
+  fetchData("/api/data")
+    .catch(function () { return fetchData("data.json"); })
+    .then(useData)
+    .catch(function () { start(P_FALLBACK, SUPRA_FALLBACK, UPDATED_FALLBACK); });
+})();
+</script>
+</body>
+</html>
