@@ -158,6 +158,66 @@
       cursor: pointer;
     }
     .mhp .fg label.chk input { margin: 0; cursor: pointer; }
+    /* Requirement-flags multi-select dropdown */
+    .mhp .msel { position: relative; }
+    .mhp .mseltrig {
+      font: inherit;
+      font-size: 12px;
+      position: relative;
+      padding: 5px 22px 5px 6px;
+      border: .5px solid var(--bd2);
+      border-radius: 7px;
+      background: var(--srf);
+      color: var(--tx);
+      cursor: pointer;
+      width: 148px;
+      max-width: 148px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mhp .mseltrig::after {
+      content: "";
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border-right: 1.5px solid var(--tx2);
+      border-bottom: 1.5px solid var(--tx2);
+      transform: translateY(-70%) rotate(45deg);
+    }
+    .mhp .mselmenu {
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 3px);
+      left: 0;
+      min-width: 178px;
+      max-height: 236px;
+      overflow-y: auto;
+      background: var(--srf);
+      border: .5px solid var(--bd2);
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .14);
+      display: none;
+    }
+    .mhp .mselmenu.open { display: block; }
+    .mhp .fg label.mselopt {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--tx);
+      text-transform: none;
+      letter-spacing: normal;
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .mhp .mselopt:hover { background: var(--srf1); }
+    .mhp .mselopt input { margin: 0; cursor: pointer; }
     .mhp select {
       font: inherit;
       font-size: 12px;
@@ -371,6 +431,7 @@
       letter-spacing: .02em;
     }
     .mhp .meta .v { margin-top: 1px; }
+    .mhp .meta .pe { display: flex; gap: 18px; }
 
     /* ---- Tags (technology + governance requirement flags) ---- */
     .mhp .tags { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -684,7 +745,7 @@
     var v = mhFocus(p);
     if (v === "Yes") return "Yes";
     if (v === "No")  return "No";
-    return "Partial / not coded";       // Partial + Not coded
+    return "Partial / unknown";       // Partial + Unknown
   }
 
   // Each filter declares:
@@ -694,16 +755,16 @@
   var FILTERS = [
     {key: "source",   label: "Source type",           type: "select", get: function (p) { return p.st; }},
     {key: "gen",      label: "GenAI specific?",        type: "select", get: genBucket,     opts: ["Yes", "Partial / unknown", "No"]},
-    {key: "mhfocus",  label: "MH / companion focus?",  type: "select", get: mhFocusBucket, opts: ["Yes", "Partial / not coded", "No"]},
+    {key: "mhfocus",  label: "MH / companion focus?",  type: "select", get: mhFocusBucket, opts: ["Yes", "Partial / unknown", "No"]},
     {key: "samd",     label: "Medical device / SaMD?", type: "check",  get: function (p) { return has(p, "Medical device (SaMD)") ? "Yes" : "No"; }},
     {key: "chatbot",  label: "Chatbot / agent?",       type: "check",  get: function (p) { return has(p, "Chatbot specific") ? "Yes" : "No"; }},
     {key: "consumer", label: "Consumer-facing AI?",    type: "check",  get: function (p) { return has(p, "Consumer-facing") ? "Yes" : "No"; }},
     {key: "mhexpl",   label: "MH explicit?",           type: "check",  get: function (p) { return p.mb === "explicit" ? "Yes" : "No"; }},
-    {key: "req",      label: "Requirement flag",       type: "select", get: function (p) { return p.req; }, multi: true}
+    {key: "req",      label: "Requirement flags",       type: "select", get: function (p) { return p.req; }, multi: true}
   ];
 
   var FSTATE = {};
-  FILTERS.forEach(function (f) { FSTATE[f.key] = "All"; });
+  FILTERS.forEach(function (f) { FSTATE[f.key] = f.multi ? [] : "All"; });
 
   var ALLP = P.concat(SUPRA);
 
@@ -720,12 +781,14 @@
     if (p._pm != null && p._pm > TIMECUT) return false;
     for (var i = 0; i < FILTERS.length; i++) {
       var f = FILTERS[i], v = FSTATE[f.key];
-      if (v && v !== "All") {
-        if (f.multi) {
-          if ((p.req || []).indexOf(v) < 0) return false;
-        } else if (f.get(p) !== v) {
-          return false;
+      if (f.multi) {
+        // v is an array of required flags; policy must have every one (AND)
+        var need = v || [];
+        for (var k = 0; k < need.length; k++) {
+          if ((f.get(p) || []).indexOf(need[k]) < 0) return false;
         }
+      } else if (v && v !== "All" && f.get(p) !== v) {
+        return false;
       }
     }
     return true;
@@ -769,6 +832,26 @@
     return MB[mb].c;
   }
 
+  // Hover-tooltip text for a set of (already filtered) policies, matching
+  // the current "Color by" mode, so the hover shows the same variable the
+  // map is colored by (e.g. "In force / enacted" in Legal-status mode).
+  function describe(pols) {
+    if (!pols.length) return "no policy";
+    if (MODE === "any" || MODE === "count") {
+      return pols.length + " " + (pols.length === 1 ? "policy" : "policies");
+    }
+    if (MODE === "lb") {
+      var lb = pols.reduce(function (a, p) { return LR[p.lb] > LR[a] ? p.lb : a; }, "unspecified");
+      return LB[lb].t;
+    }
+    if (MODE === "bb") {
+      var bb = pols.reduce(function (a, p) { return BR[p.bb] > BR[a] ? p.bb : a; }, "unspecified");
+      return BB[bb].t;
+    }
+    var dmb = pols.reduce(function (a, p) { return MR[p.mb] > MR[a] ? p.mb : a; }, "unspecified");
+    return MB[dmb].t;
+  }
+
   /* ============================================================
      7. DOM REFERENCES + HEADER META
      ============================================================ */
@@ -801,6 +884,7 @@
   /* ============================================================
      9. BUILD FILTER DROPDOWNS (+ reset button)
      ============================================================ */
+  var syncReqUI = null;   // resets the requirement dropdown's summary label
   var filtersEl = document.getElementById("filters");
   FILTERS.forEach(function (f) {
     var g = document.createElement("div");
@@ -821,13 +905,64 @@
       return;
     }
 
-    // Select filter. Option list: explicit (opts), fixed requirement
-    // order (multi), or the sorted distinct values found in the data.
+    // Multi-select filter (requirement flags): a compact dropdown whose
+    // menu holds a checkbox per flag. A policy passes only if it has every
+    // checked flag (AND); the closed trigger summarizes the selection.
+    if (f.multi) {
+      var mlab = document.createElement("label");
+      mlab.textContent = f.label;
+      var msel = document.createElement("div");
+      msel.className = "msel";
+      var trig = document.createElement("button");
+      trig.type = "button";
+      trig.className = "mseltrig";
+      var menu = document.createElement("div");
+      menu.className = "mselmenu";
+
+      var syncSummary = function () {
+        var sel = FSTATE[f.key];
+        trig.textContent = sel.length === 0 ? "All"
+          : (sel.length === 1 ? sel[0] : sel.length + " selected");
+      };
+      REQORDER.forEach(function (rq) {
+        var opt = document.createElement("label");
+        opt.className = "mselopt";
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.onchange = function () {
+          var arr = FSTATE[f.key], idx = arr.indexOf(rq);
+          if (cb.checked && idx < 0) arr.push(rq);
+          else if (!cb.checked && idx >= 0) arr.splice(idx, 1);
+          syncSummary();
+          apply();
+        };
+        opt.appendChild(cb);
+        opt.appendChild(document.createTextNode(rq));
+        menu.appendChild(opt);
+      });
+      trig.onclick = function (ev) { ev.stopPropagation(); menu.classList.toggle("open"); };
+      document.addEventListener("click", function (ev) {
+        if (!msel.contains(ev.target)) menu.classList.remove("open");
+      });
+      syncReqUI = function () {
+        [].forEach.call(menu.querySelectorAll("input[type=checkbox]"), function (c) { c.checked = false; });
+        syncSummary();
+      };
+      syncSummary();
+
+      msel.appendChild(trig);
+      msel.appendChild(menu);
+      g.appendChild(mlab);
+      g.appendChild(msel);
+      filtersEl.appendChild(g);
+      return;
+    }
+
+    // Select filter. Option list: explicit (opts), else the sorted
+    // distinct values found in the data.
     var opts;
     if (f.opts) {
       opts = f.opts.slice();
-    } else if (f.multi) {
-      opts = REQORDER.slice();
     } else {
       var set = {};
       ALLP.forEach(function (p) {
@@ -867,9 +1002,10 @@
   rb.className = "btn";
   rb.innerHTML = '<i class="ti ti-refresh" aria-hidden="true"></i>Reset';
   rb.onclick = function () {
-    FILTERS.forEach(function (f) { FSTATE[f.key] = "All"; });
+    FILTERS.forEach(function (f) { FSTATE[f.key] = f.multi ? [] : "All"; });
     [].forEach.call(filtersEl.querySelectorAll("select"), function (s) { s.value = "All"; });
     [].forEach.call(filtersEl.querySelectorAll("input[type=checkbox]"), function (c) { c.checked = false; });
+    if (syncReqUI) syncReqUI();
     apply();
   };
   rg.appendChild(rl);
@@ -973,8 +1109,8 @@
       '<div><div class="k">Target population</div><div class="v">' + p.target + '</div></div>' +
       '<div><div class="k">MH relevance</div><div class="v">' + p.mhRaw + '</div></div>' +
       '<div><div class="k">Source type</div><div class="v">' + p.st + '</div></div>' +
-      '<div><div class="k">Published</div><div class="v">' + p.pub + '</div></div>' +
-      '<div><div class="k">Effective</div><div class="v">' + p.eff + '</div></div>' +
+      '<div class="pe"><div><div class="k">Published</div><div class="v">' + p.pub + '</div></div>' +
+      '<div><div class="k">Effective</div><div class="v">' + p.eff + '</div></div></div>' +
       '</div>';
 
     var tags = "";
@@ -1227,9 +1363,8 @@
         .attr("d", pathGen)
         .on("mousemove", function (ev, d) {
           var r = resolve(d.properties.name);
-          var n = r ? visible(r).length : 0;
           tip.style.opacity = 1;
-          tip.textContent = d.properties.name + (r ? " · " + n + " " + (n === 1 ? "policy" : "policies") : " · no policy");
+          tip.textContent = d.properties.name + " · " + (r ? describe(visible(r)) : "no policy");
           move(ev);
         })
         .on("mouseleave", function () { tip.style.opacity = 0; })
@@ -1247,9 +1382,8 @@
         .attr("stroke-width", 1.2)
         .on("mousemove", function (ev, d) {
           var r = resolve(d.name);
-          var n = r ? visible(r).length : 0;
           tip.style.opacity = 1;
-          tip.textContent = d.name + (r ? " · " + n + " " + (n === 1 ? "policy" : "policies") : "");
+          tip.textContent = d.name + (r ? " · " + describe(visible(r)) : "");
           move(ev);
         })
         .on("mouseleave", function () { tip.style.opacity = 0; })
@@ -1275,12 +1409,10 @@
             return byC["United States of America"].subs[d.properties.name] ? "pointer" : "default";
           })
           .on("mousemove", function (ev, d) {
-            var pols = (byC["United States of America"].subs[d.properties.name] || []).filter(passes);
+            var stSubs = byC["United States of America"].subs[d.properties.name];
+            var pols = (stSubs || []).filter(passes);
             tip.style.opacity = 1;
-            tip.textContent = d.properties.name +
-              (byC["United States of America"].subs[d.properties.name]
-                ? " · " + pols.length + " " + (pols.length === 1 ? "policy" : "policies")
-                : " · no state policy");
+            tip.textContent = d.properties.name + (stSubs ? " · " + describe(pols) : " · no state policy");
             move(ev);
           })
           .on("mouseleave", function () { tip.style.opacity = 0; })
